@@ -116,10 +116,15 @@ test_2 = rbind(bv_fm_sc, test_2)
 
 # martinique --------------------------------------------------------------
 
+# valeur_z_martinique <- qgis_run_algorithm(
+#   "native:extractzvalues", INPUT = fonds_separes_bv[["martinique"]],
+#   SUMMARIES = 0
+# )
+# hh <- valeur_z_martinique |>
+#   sf::st_as_sf()
 
 test_martinique_wgs84 <- qgis_run_algorithm(
-  alg, INPUT = fonds_separes_bv[["martinique"]], DELTA_Y = distances[["martinique"]][[2]] + 580900, DELTA_X = distances[["martinique"]][[1]] +  80600, ROTATION_Z = 0.2
-)
+  alg, INPUT = fonds_separes_bv[["martinique"]], DELTA_Y = distances[["martinique"]][[2]] + 340900, DELTA_X = distances[["martinique"]][[1]] +  80600)
 
 test_martinique = sf::st_as_sf(test_martinique_wgs84)
 test_martinique <- test_martinique |>
@@ -133,7 +138,7 @@ mapview::mapview(total_1)
 
 
 test_reunion_wgs84 <- qgis_run_algorithm(
-  alg, INPUT = fonds_separes_bv[["reunion"]], DELTA_Y = distances[["reunion"]][[2]] + 550900, DELTA_X = distances[["reunion"]][[1]] +  991800, SCALE_Y = 0.92, SCALE_X =0.92, ROTATION_Z = 0)
+  alg, INPUT = fonds_separes_bv[["reunion"]], DELTA_Y = distances[["reunion"]][[2]] +  690900, DELTA_X = distances[["reunion"]][[1]] + 2246800, SCALE_X = 0.82, SCALE_Y = 0.82)
 
 test_reunion = sf::st_as_sf(test_reunion_wgs84)
 test_reunion <- test_reunion |>
