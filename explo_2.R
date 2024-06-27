@@ -1,5 +1,6 @@
 library(dplyr) ; library(tidyverse)
 library(sf); library(ggplot2)
+library("qgisprocess")
 
 epci_fonds <- st_read("C:/Users/Rania El Fahli/Downloads/ADMIN-EXPRESS-COG_3-1__SHP_WGS84G_FRA_2022-04-15/ADMIN-EXPRESS-COG_3-1__SHP_WGS84G_FRA_2022-04-15/ADMIN-EXPRESS-COG/1_DONNEES_LIVRAISON_2022-04-15/ADECOG_3-1_SHP_WGS84G_FRA/EPCI.shp")
 
@@ -52,6 +53,10 @@ fonds_separes_epci <- fonds_separes(
   code_filtre = "epci"
 )
 
+# calcul distances bbox ---------------------------------------------------
+
+
+
 bbox_drom_fm <- lapply(fonds_separes_epci, function(x) {
   assign(paste0(names(x)), x |> sf::st_bbox(), envir = .GlobalEnv)
 })
@@ -78,14 +83,18 @@ calcul_distances <- function(x) {
   return(list(dx, dy))
   
 }
-library("qgisprocess")
+
 
 distances <- bbox_drom_fm |>
   lapply(calcul_distances)
 
+# récupérer algorithme qgis
 alg = "native:affinetransform"
-union_arguments = qgis_get_argument_specs(alg)
-union_arguments
+
+# check algorithm arguments
+# affine_arguments = qgis_get_argument_specs(alg)
+# affine_arguments 
+
 
 
 # guadeloupe --------------------------------------------------------------
@@ -108,7 +117,7 @@ test_2 = rbind(epci_fm_sc, test_2)
 
 
 test_martinique_wgs84 <- qgis_run_algorithm(
-  alg, INPUT = fonds_separes_epci[["martinique"]], DELTA_Y = distances[["martinique"]][[2]] + 580900, DELTA_X = distances[["martinique"]][[1]] +  90800 
+  alg, INPUT = fonds_separes_epci[["martinique"]], DELTA_Y = distances[["martinique"]][[2]] + 580900, DELTA_X = distances[["martinique"]][[1]] +  80600, ROTATION_Z = 0.2
 )
 
 test_martinique = sf::st_as_sf(test_martinique_wgs84)
@@ -119,18 +128,68 @@ mapview::mapview(test_martinique)
 total_1 = rbind(epci_fm_sc, test_2, test_martinique)
 mapview::mapview(total_1)
 
-
 # réunion -----------------------------------------------------------------
 
 
 test_reunion_wgs84 <- qgis_run_algorithm(
-  alg, INPUT = fonds_separes_epci[["reunion"]], DELTA_Y = distances[["reunion"]][[2]] + 380900, DELTA_X = distances[["reunion"]][[1]] +  90800
-)
+  alg, INPUT = fonds_separes_epci[["reunion"]], DELTA_Y = distances[["reunion"]][[2]] + 550900, DELTA_X = distances[["reunion"]][[1]] +  991800, SCALE_Y = 0.92, SCALE_X =0.92, ROTATION_Z = 0)
 
 test_reunion = sf::st_as_sf(test_reunion_wgs84)
 test_reunion <- test_reunion |>
   dplyr::rename("geometry" = geom)
 mapview::mapview(test_reunion)
 
-total_1 = rbind(epci_fm_sc, test_2, test_martinique)
-mapview::mapview(total_1)
+ total_3 = rbind(epci_fm_sc, test_2, test_martinique, test_reunion)
+ mapview::mapview(total_3)
+ 
+
+ 
+ 
+# prépa couche vectoriel pour test déplacement polygones sur QGIS -------------------------------------------------------------------
+
+#  source("C:/Users/Rania El Fahli/Documents/MIGCOM_repo/Migrations_residentielles_communes.Insee/fonctions/carte_bv_continue_dep.R")
+#  bv22 <- st_read("C:/Users/Rania El Fahli/Documents/Atlas/Fonds de carte/BV2022/bv2022_2023.shp", quiet = T) 
+# 
+# bv22 <- bv22 |>
+#    mutate(
+#      region = case_when(
+#        bv2022 %in% bv_guad ~ "Guadeloupe", 
+#        bv2022 %in% bv_guy ~ "Guyane", 
+#        bv2022 %in% bv_reun ~ "Réunion", 
+#        bv2022 %in% bv_mart ~ "Martinique", 
+#       !bv2022 %in% bv_dom & !grepl("^976", bv2022) ~ "fm", 
+#       grepl("^976", bv2022) ~ "Mayotte"
+#      )
+#    )
+# 
+# sf::st_write(bv22, "C:/Users/Rania El Fahli/Documents/Atlas/Fonds de carte/BV2022/bv2022_2023_var_region_t2.shp", quiet = T)
+#  
+# 
+# test_bv <- sf::st_read("C:/Users/Rania El Fahli/Documents/Atlas/Fonds de carte/BV2022/bv2022_2023_var_region.shp", quiet = T)
+# 
+# 
+# test_bv |>
+#   ggplot() +
+#   geom_sf(fill ="pink")
+# 
+# 
+# test_bv2 <- sf::st_read("C:/Users/Rania El Fahli/Documents/Atlas/Fonds de carte/BV2022/bv2022_2023_var_region_t2.shp", quiet = T)
+# 
+# test_bv2 |>
+#   ggplot() +
+#   geom_sf(fill = alpha("#FEE4D8", alpha  = 0.3), colour = "grey77",  linewidth = 0.6) +
+#   coord_sf(crs = "EPSG:3949") +
+#   theme(panel.background = element_blank(), 
+#         panel.grid = element_blank(), 
+#         axis.line = element_blank(), 
+#         axis.text.x = element_blank(), 
+#         axis.text.y = element_blank(), 
+#         axis.ticks.x = element_blank(), 
+#         axis.ticks.y = element_blank(), 
+#         legend.position = "none", 
+#         legend.title = element_text(size = 18),
+#         legend.text = element_text(size = 16), 
+#         text = element_text(family = "Chivo")
+#   )
+#  rendu pas terrible sur QGIS, déplacement à la main des polygones suffit pas, marche pas aussi bien que 
+#  transformation affine (les polygones sont un peu écrasés & le changement de projection CC49 -> WGS84 pas fou)
