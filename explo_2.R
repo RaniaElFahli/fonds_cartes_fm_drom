@@ -50,7 +50,7 @@ fonds_separes <- function(table_sf, code_geo, code_filtre) {
 
 fonds_separes_bv <- fonds_separes(
   table_sf = bv22, 
-  code_geo = CODE_SIREN, 
+  code_geo = bv2022, 
   code_filtre = "bv"
 )
 
@@ -58,22 +58,22 @@ fonds_separes_bv <- fonds_separes(
 
 
 
-bbox_drom_fm <- lapply(fonds_separes_epci, function(x) {
+bbox_drom_fm <- lapply(fonds_separes_bv, function(x) {
   assign(paste0(names(x)), x |> sf::st_bbox(), envir = .GlobalEnv)
 })
 
-tab_22 <- COGugaison::table_supracom_2022
+compo_bv22 <- readxl::read_excel("C:/Users/Rania El Fahli/Documents/Atlas/Données brutes/Tables_géo_zonages/BV2022_au_01-01-2022.xlsx", sheet = 2, skip = 5)
 
-epci_corse <- tab_22 |>
+bv_corse <- compo_bv22 |>
   dplyr::filter(REG == "94") |>
-  select(c(EPCI)) |>
-  distinct(EPCI)
-epci_corse <- epci_corse$EPCI
+  select(c(BV2022)) |>
+  distinct(BV2022)
+bv_corse <- bv_corse$BV2022
 
-epci_fm_sc <- fonds_separes_epci[["france_m"]] |>
-  dplyr::filter(!CODE_SIREN %in% epci_corse)
+bv_fm_sc <- fonds_separes_bv[["france_m"]] |>
+  dplyr::filter(!bv2022 %in% bv_corse)
 
-bbox_fm_sc <- sf::st_bbox(epci_fm_sc)
+bbox_fm_sc <- sf::st_bbox(bv_fm_sc)
 
 
 calcul_distances <- function(x) {
@@ -102,23 +102,23 @@ alg = "native:affinetransform"
 
 
 test_guadeloupe_wgs84 <- qgis_run_algorithm(
-  alg, INPUT = fonds_separes_epci[["guadeloupe"]], DELTA_Y = distances[["guadeloupe"]][[2]] + 480900 , DELTA_X = distances[["guadeloupe"]][[1]] +90900
+  alg, INPUT = fonds_separes_bv[["guadeloupe"]], DELTA_Y = distances[["guadeloupe"]][[2]] + 480900 , DELTA_X = distances[["guadeloupe"]][[1]] +90900
 )
 
 test_2 = sf::st_as_sf(test_guadeloupe_wgs84)
 test_2 <- test_2 |>
   dplyr::rename("geometry" = geom)
-# test_2 = rbind(epci_fm_sc, test_2)
+# test_2 = rbind(bv_fm_sc, test_2)
 mapview::mapview(test_2)
 
-test_2 = rbind(epci_fm_sc, test_2)
+test_2 = rbind(bv_fm_sc, test_2)
 
 
 # martinique --------------------------------------------------------------
 
 
 test_martinique_wgs84 <- qgis_run_algorithm(
-  alg, INPUT = fonds_separes_epci[["martinique"]], DELTA_Y = distances[["martinique"]][[2]] + 580900, DELTA_X = distances[["martinique"]][[1]] +  80600, ROTATION_Z = 0.2
+  alg, INPUT = fonds_separes_bv[["martinique"]], DELTA_Y = distances[["martinique"]][[2]] + 580900, DELTA_X = distances[["martinique"]][[1]] +  80600, ROTATION_Z = 0.2
 )
 
 test_martinique = sf::st_as_sf(test_martinique_wgs84)
@@ -126,21 +126,21 @@ test_martinique <- test_martinique |>
   dplyr::rename("geometry" = geom)
 mapview::mapview(test_martinique)
 
-total_1 = rbind(epci_fm_sc, test_2, test_martinique)
+total_1 = rbind(bv_fm_sc, test_2, test_martinique)
 mapview::mapview(total_1)
 
 # réunion -----------------------------------------------------------------
 
 
 test_reunion_wgs84 <- qgis_run_algorithm(
-  alg, INPUT = fonds_separes_epci[["reunion"]], DELTA_Y = distances[["reunion"]][[2]] + 550900, DELTA_X = distances[["reunion"]][[1]] +  991800, SCALE_Y = 0.92, SCALE_X =0.92, ROTATION_Z = 0)
+  alg, INPUT = fonds_separes_bv[["reunion"]], DELTA_Y = distances[["reunion"]][[2]] + 550900, DELTA_X = distances[["reunion"]][[1]] +  991800, SCALE_Y = 0.92, SCALE_X =0.92, ROTATION_Z = 0)
 
 test_reunion = sf::st_as_sf(test_reunion_wgs84)
 test_reunion <- test_reunion |>
   dplyr::rename("geometry" = geom)
 mapview::mapview(test_reunion)
 
- total_3 = rbind(epci_fm_sc, test_2, test_martinique, test_reunion)
+ total_3 = rbind(bv_fm_sc, test_2, test_martinique, test_reunion)
  mapview::mapview(total_3)
  
 
