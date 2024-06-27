@@ -2,20 +2,21 @@ library(dplyr) ; library(tidyverse)
 library(sf); library(ggplot2)
 library("qgisprocess")
 
-epci_fonds <- st_read("C:/Users/Rania El Fahli/Downloads/ADMIN-EXPRESS-COG_3-1__SHP_WGS84G_FRA_2022-04-15/ADMIN-EXPRESS-COG_3-1__SHP_WGS84G_FRA_2022-04-15/ADMIN-EXPRESS-COG/1_DONNEES_LIVRAISON_2022-04-15/ADECOG_3-1_SHP_WGS84G_FRA/EPCI.shp")
+source("C:/Users/Rania El Fahli/Documents/MIGCOM_repo/Migrations_residentielles_communes.Insee/fonctions/carte_bv_continue_dep.R")
+bv22 <- st_read("C:/Users/Rania El Fahli/Documents/Atlas/Fonds de carte/BV2022/bv2022_2023.shp", quiet = T)
 
 mayotte <- st_read("C://Users//Rania El Fahli//Documents//mayotte.shp")
-epci_fonds <- sf::st_transform(epci_fonds, crs = st_crs("EPSG:3949"))
+bv22 <- sf::st_transform(bv22, crs = st_crs("EPSG:3949"))
 mayotte <- sf::st_transform(mayotte, crs = st_crs("EPSG:3949"))
 
 # récupérer codes géo 22 des EPCI de chaque DROM
-source("C:/Users/Rania El Fahli/Documents/Atlas/Cartes/Scripts/codes_epci_dom.R")
 
 # séparer les fonds de cartes
 fonds_separes <- function(table_sf, code_geo, code_filtre) {
   
   france_m <- table_sf %>%
-    dplyr::filter(!{{code_geo}} %in% get(paste0(code_filtre, "_dom")))|>
+    dplyr::filter(!{{code_geo}} %in% get(paste0(code_filtre, "_dom")) &
+                    !grepl("^976", {{code_geo}}))|>
     mutate(drom_fm = "france_m")
   print(paste("Exclure:", paste0(code_filtre, "_dom")))
   print(head(france_m))
@@ -47,10 +48,10 @@ fonds_separes <- function(table_sf, code_geo, code_filtre) {
   return(list(france_m = france_m, guadeloupe = guadeloupe, reunion = reunion, martinique = martinique, guyane = guyane))
 }
 
-fonds_separes_epci <- fonds_separes(
-  table_sf = epci_fonds, 
+fonds_separes_bv <- fonds_separes(
+  table_sf = bv22, 
   code_geo = CODE_SIREN, 
-  code_filtre = "epci"
+  code_filtre = "bv"
 )
 
 # calcul distances bbox ---------------------------------------------------
