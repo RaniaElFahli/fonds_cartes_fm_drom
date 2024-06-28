@@ -96,7 +96,9 @@ alg = "native:affinetransform"
 # affine_arguments = qgis_get_argument_specs(alg)
 # affine_arguments 
 
-
+mayotte_bbox <- sf::st_bbox(mayotte)
+dx <- bbox_fm_sc$xmin - mayotte_bbox$xmax 
+dy <- bbox_fm_sc$ymin - mayotte_bbox$ymax
 
 # guadeloupe --------------------------------------------------------------
 
@@ -138,7 +140,7 @@ mapview::mapview(total_1)
 
 
 test_reunion_wgs84 <- qgis_run_algorithm(
-  alg, INPUT = fonds_separes_bv[["reunion"]], DELTA_Y = distances[["reunion"]][[2]] +  690900, DELTA_X = distances[["reunion"]][[1]] + 2246800, SCALE_X = 0.82, SCALE_Y = 0.82)
+  alg, INPUT = fonds_separes_bv[["reunion"]], DELTA_Y = distances[["reunion"]][[2]] +  690900, DELTA_X = distances[["reunion"]][[1]] + 2046800, SCALE_X = 0.82, SCALE_Y = 0.82)
 
 test_reunion = sf::st_as_sf(test_reunion_wgs84)
 test_reunion <- test_reunion |>
@@ -149,7 +151,16 @@ mapview::mapview(test_reunion)
  mapview::mapview(total_3)
  
 
+
+# Guyane ------------------------------------------------------------------
+
+ test_guyane_wgs84 <- qgis_run_algorithm(
+   alg, INPUT = fonds_separes_bv[["guyane"]], DELTA_Y = distances[["guyane"]][[2]] + 840900, DELTA_X = distances[["guyane"]][[1]] +  5600)
  
+ test_guyane = sf::st_as_sf(test_guyane_wgs84)
+ test_guyane <- test_guyane |>
+   dplyr::rename("geometry" = geom)
+ mapview::mapview(test_guyane)
  
 # prépa couche vectoriel pour test déplacement polygones sur QGIS -------------------------------------------------------------------
 
@@ -199,3 +210,28 @@ mapview::mapview(test_reunion)
 #   )
 #  rendu pas terrible sur QGIS, déplacement à la main des polygones suffit pas, marche pas aussi bien que 
 #  transformation affine (les polygones sont un peu écrasés & le changement de projection CC49 -> WGS84 pas fou)
+
+ europe_eurostat <- sf::st_read("C:/Users/Rania El Fahli/Downloads/NUTS_RG_03M_2021_4326.shp/NUTS_RG_03M_2021_4326.shp")
+ 
+ europe_hab <- europe_eurostat |>
+   dplyr::group_by(CNTR_CODE) |>
+   dplyr::summarise(
+     geometry = sf::st_union(geometry)
+   ) |>
+   ungroup()
+ 
+ europe_hab <- st_transform(europe_hab, crs = st_crs("EPSG:3949")) 
+ france <- europe_hab |>
+   dplyr::filter(CNTR_CODE == "FR")
+ 
+test_bv3 <- sf::st_read("C:/Users/Rania El Fahli/Downloads/bv2022_2023_drom_rap/bv2022_2023_drom_rap.shp")
+ test_bv3|>
+   ggplot() +
+   geom_sf(fill = alpha("#FEE4D8", alpha  = 0.3), colour = "grey77",  linewidth = 0.6) +
+   geom_sf(data = subset(europe_hab, CNTR_CODE != "FR"),
+           fill = "grey87", colour = "white", linewidth = 0.7) +
+   geom_sf(data = france, fill = "transparent",, colour = "grey3", linewidth = 0.7) +
+   theme(panel.background = element_rect(fill = "aliceblue"))+
+   coord_sf(crs = "EPSG:3949") + 
+   coord_sf(xlim = c(2230894, 1091069), ylim = c(7347866, 8481077))
+ 
